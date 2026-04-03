@@ -1,2 +1,2 @@
 # dempulxl
-dempulxl with running on worker cloudflare
+dempulxl bot tele running on worker cloudflare
