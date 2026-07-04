@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Cek Kuota Nomor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 400px;
+      max-width: 90%;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 12px;
+      background: #ecf0f1;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📱 Cek Kuota Nomor</h2>
+    <input type="text" id="msisdn" placeholder="Masukkan nomor (08xxx atau 62xxx)">
+    <button onclick="cekKuota()">🔍 Cek Kuota</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    async function cekKuota() {
+      const input = document.getElementById("msisdn");
+      let msisdn = input.value.trim();
+      const resultDiv = document.getElementById("result");
+
+      if (!msisdn) {
+        resultDiv.textContent = "❌ Nomor tidak boleh kosong.";
+        return;
+      }
+
+      // auto ganti 08xxxx ke 62xxxx
+      if (msisdn.startsWith("08")) {
+        msisdn = "62" + msisdn.substring(1);
+      }
+
+      resultDiv.textContent = "⏳ Mengecek kuota...";
+
+      try {
+        const response = await fetch(
+          `https://apigw.kmsp-store.com/sidompul/v4/cek_kuota?msisdn=${msisdn}&isJSON=true`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": "Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw",
+              "X-API-Key": "60ef29aa-a648-4668-90ae-20951ef90c55",
+              "X-App-Version": "4.0.0",
+            }
+          }
+        );
+
+        const res = await response.json();
+
+        if (!res || !res.status) {
+          resultDiv.textContent = "❌ Gagal cek kuota.";
+          return;
+        }
+
+        let text = `📱 Nomor: ${msisdn}\n`;
+        text += `📡 Operator: ${res.data?.data_sp?.prefix?.value || "-"}\n`;
+        text += `📆 Masa Aktif: ${res.data?.data_sp?.active_period?.value || "-"}\n`;
+        text += `⏳ Masa Tenggang: ${res.data?.data_sp?.grace_period?.value || "-"}\n\n`;
+
+        if (res.data?.hasil) {
+          text += `📊 Kuota:\n${res.data.hasil
+            .replace(/<br>/g, "\n")
+            .replace(/=+/g, "")
+            .trim()}`;
+        } else {
+          text += "❌ Tidak ada info kuota.";
+        }
+
+        resultDiv.textContent = text;
+      } catch (err) {
+        console.error("ERROR cek kuota:", err.message);
+        resultDiv.textContent = "❌ Error koneksi atau server down.";
+      }
+    }
+  </script>
+</body>
+</html>
